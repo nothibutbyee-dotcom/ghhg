@@ -1,0 +1,27 @@
+name: Build IPA
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compile app
+        run: |
+          APP=build/Payload/FakeStore.app
+          mkdir -p "$APP"
+          xcrun -sdk iphoneos swiftc -target arm64-apple-ios16.0 -parse-as-library -O Sources/*.swift -o "$APP/FakeStore"
+          cp Info.plist "$APP/Info.plist"
+
+      - name: Package IPA
+        run: cd build && zip -r FakeStore.ipa Payload
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: FakeStore-ipa
+          path: build/FakeStore.ipa
+          if-no-files-found: error
